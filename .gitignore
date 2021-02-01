@@ -1,0 +1,8 @@
+datasets/vectorized/*.json
+datasets/clustered/*.json
+word2vec/*.kv
+
+notebooks/.ipynb_checkpoints/
+venv/
+.idea
+.DS_Store
