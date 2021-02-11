@@ -54,7 +54,7 @@ class CleanAndVectorize(object):
         return w2v
 
     def process(self, filepath, save_tokens=False, debug=False):
-        with open(filepath) as csvfile:
+        with open(filepath,encoding='latin-1') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',', escapechar='\\')
             for i, row in enumerate(csvreader):
                 if i == 0:
@@ -116,14 +116,10 @@ def main():
     cv = CleanAndVectorize(args.embedding_file)
 
     with open(args.outfile,'w') as outfile:
-        outfile.write('[')
-        for i, obs in enumerate(cv.process(args.infile,
-                                   save_tokens=args.save_tokens,
-                                   debug=args.debug)):
-            if i > 0:
-                outfile.write(',')
-            json.dump(obs,outfile)
-        outfile.write(']')
+        observations = [obs for obs in cv.process(args.infile,
+                                                  save_tokens=args.save_tokens,
+                                                  debug=args.debug)]
+        json.dump(observations,outfile)
 
 if __name__ == "__main__":
     main()
