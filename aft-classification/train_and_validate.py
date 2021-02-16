@@ -12,6 +12,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
 from autosklearn.metrics import balanced_accuracy, precision, recall, f1, roc_auc, average_precision
 import autosklearn.classification
+from scipy.sparse import load_npz
 
 METRICS = [
     balanced_accuracy,
@@ -49,6 +50,8 @@ def main():
                         help='a file path to a csv containing vectorized AFT data, or a pickled autosklearn classification object')
     parser.add_argument('outfile',
                         help='a file path to write validation results')
+    parser.add_argument('-m', '--sparse_matrix',
+                        default=None)
     parser.add_argument('-o', '--output_type',
                         choices=['csv','json'],
                         default='csv')
@@ -85,9 +88,15 @@ def main():
         with open(args.infile,'r') as filestream:
             df = pd.DataFrame(json.load(filestream))
 
-        df = generate_sample(df, args.sample_size)
+        #df = generate_sample(df, args.sample_size)
 
-        features = pd.DataFrame(df['feature_vector'].values.tolist()).to_numpy()
+        if args.sparse_matrix:
+            with open(args.sparse_matrix,'rb') as filestream:
+                features = load_npz(filestream)
+
+        else:
+            features = pd.DataFrame(df['feature_vector'].values.tolist()).to_numpy()
+
         labels = df['aft_net_sign_helpful'].to_numpy()
         feat_type = ['Numerical'] * np.shape(features)[1]
 

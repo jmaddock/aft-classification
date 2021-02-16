@@ -9,13 +9,31 @@ vectorize: word2vec/enwiki-20191201-learned_vectors.50_cell.100k.kv
 		./word2vec/enwiki-20191201-learned_vectors.50_cell.100k.kv \
 		--save_tokens
 
-# need to update this with reasonable value of k
-train: ./datasets/vectorized/vectorized_w2v_2021-02-11.json
+vectorize_bow:
+	python ./aft-classification/clean_and_vectorize_bow.py \
+		/Users/klogg/research_data/aft/raw/dump_03-24-20.csv \
+		./datasets/vectorized/vectorized_bow_100k_2021-02-16.json \
+		./datasets/vectorized/vectorized_bow_100k_2021-02-16.npz \
+		--max_df .9 \
+		--max_features 10 \
+		--save_tokens
+
+train_w2v: ./datasets/vectorized/vectorized_w2v_100k_2021-02-11.json
 	python ./aft-classification/train_and_validate.py \
-		./datasets/vectorized/vectorized_w2v_2021-02-11.json \
-		./model_results/model_results_w2v_2021-02-11.csv \
-		-w 32 \
-		-s ./models/model_2021-02-11.pickle
+		./datasets/vectorized/vectorized_w2v_100k_2021-02-11.json \
+		./model_results/model_results_w2v_100k_2021-02-11.csv \
+		-w 4 \
+		-s ./models/model_w2v_100k_2021-02-11.pickle
+
+train_bow: ./datasets/vectorized/vectorized_bow_100k_2021-02-16.json \
+	./datasets/vectorized/vectorized_bow_100k_2021-02-16.npz
+	python ./aft-classification/train_and_validate.py \
+		./datasets/vectorized/vectorized_bow_100k_2021-02-16.json \
+		./model_results/model_results_bow_100k_2021-02-16.csv \
+		-m ./datasets/vectorized/vectorized_bow_100k_2021-02-16.npz \
+		-w 4 \
+		-s ./models/model_bow_100k_2021-02-16.pickle
+
 
 test: ./datasets/vectorized/vectorized_w2v_10k_2021-02-09.json
 	python ./aft-classification/train_and_validate.py \

@@ -1,5 +1,5 @@
 datasets/vectorized/*.json
-datasets/clustered/*.json
+datasets/vectorized/*.npz
 word2vec/*.kv
 model_results/*.csv
 model_results/*.json
