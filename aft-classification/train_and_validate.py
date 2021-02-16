@@ -117,7 +117,8 @@ def main():
             scoring_functions=METRICS,
             #resampling_strategy = StratifiedKFold,
             #resampling_strategy_arguments={'folds': args.k},
-            n_jobs = args.workers
+            n_jobs = args.workers,
+            memory_limit = 50000
         )
         cls.fit(
             features_train,
