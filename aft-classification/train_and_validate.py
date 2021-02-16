@@ -110,7 +110,7 @@ def main():
         )
 
         cls = autosklearn.classification.AutoSklearnClassifier(
-            #time_left_for_this_task=120,
+            time_left_for_this_task=86400,
             #per_run_time_limit=30,
             include_preprocessors=['no_preprocessing'],
             ensemble_size=0,
@@ -118,7 +118,7 @@ def main():
             #resampling_strategy = StratifiedKFold,
             #resampling_strategy_arguments={'folds': args.k},
             n_jobs = args.workers,
-            memory_limit = 50000
+            memory_limit = None
         )
         cls.fit(
             features_train,
