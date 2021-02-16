@@ -88,7 +88,7 @@ def main():
         with open(args.infile,'r') as filestream:
             df = pd.DataFrame(json.load(filestream))
 
-        #df = generate_sample(df, args.sample_size)
+        df = generate_sample(df, args.sample_size)
 
         if args.sparse_matrix:
             with open(args.sparse_matrix,'rb') as filestream:
