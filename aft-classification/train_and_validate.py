@@ -7,6 +7,7 @@ import argparse
 import pickle
 import pandas as pd
 import numpy as np
+import psutil
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
@@ -61,8 +62,12 @@ def main():
     parser.add_argument('-n', '--sample_size',
                         type=int,
                         default=None)
-    parser.add_argument('-w', '--workers',
-                        type=int)
+    parser.add_argument('--cpu_limit',
+                        type=int,
+                        default=psutil.cpu_count())
+    parser.add_argument('--memory_limit',
+                        type=int,
+                        default=psutil.virtual_memory()[1])
     parser.add_argument('-v', '--verbose',
                         action='store_true')
     parser.add_argument('-d', '--debug',
@@ -117,8 +122,8 @@ def main():
             scoring_functions=METRICS,
             #resampling_strategy = StratifiedKFold,
             #resampling_strategy_arguments={'folds': args.k},
-            n_jobs = args.workers,
-            memory_limit = None
+            n_jobs = args.cpu_limit,
+            memory_limit = args.memory_limit
         )
         cls.fit(
             features_train,
