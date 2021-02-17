@@ -38,13 +38,15 @@ class CleanAndVectorize(object):
             'aft_unhelpful'
         ]
 
-    def process(self, observations, save_tokens=False, debug=False):
+    def process(self, observations, save_tokens=False, remove_zero=True, debug=False):
         if debug:
             observations = observations.sample(debug)
         observations = observations[self.cols_to_extract]
         observations['aft_comment'] = observations['aft_comment'].astype(str)
         observations['aft_net_sign_helpful'] = np.sign(
             observations['aft_helpful'] - observations['aft_unhelpful']).astype(int)
+        if remove_zero:
+            observations = observations.loc[observations['aft_net_sign_helpful'] != 0]
         if save_tokens:
             observations['tokenized_text'] = observations['aft_comment'].apply(self.tokenizer)
         #observations['feature_vector'] = self.vectorizer.fit_transform(observations['aft_comment'].values).toarray().tolist()
