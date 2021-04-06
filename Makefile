@@ -90,6 +90,7 @@ train_w2v_w_rating: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json
 		./word2vec/aft_2021-03-30_learned_vectors.50_cell.10k.kv \
 		--max_features 100
 		--max_vocab 10000
+		--cpu_count 8
 
 ## download aft dataset
 ./datasets/raw/dump_03-24-20.csv:

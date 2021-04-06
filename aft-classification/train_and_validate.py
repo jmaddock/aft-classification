@@ -94,7 +94,7 @@ def main():
         logger.setLevel(logging.INFO)
 
     if not args.memory_limit:
-        memory_limit = ((psutil.virtual_memory()[1] >> 20) * .75) / args.cpu_limit
+        memory_limit = (psutil.virtual_memory()[1] >> 20) / args.cpu_limit
     else:
         memory_limit = args.memory_limit
 
