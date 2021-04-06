@@ -1,24 +1,26 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-import csv
 import json
 import argparse
 import logging
-import functools
 import numpy as np
+import pandas as pd
 
-from revscoring.features import wikitext
-from revscoring.datasources.meta import mappers, vectorizers
-from revscoring.datasources import revision_oriented
-from revscoring.dependencies import solve
-from revscoring.features.meta import aggregators
+from gensim.models import KeyedVectors
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 class CleanAndVectorize(object):
 
-    def __init__(self, en_kvs_path):
-        self.tokenizer = mappers.lower_case(wikitext.revision.datasources.words)
-        self.vectorizer = self.load_vectorizer(en_kvs_path)
+    def __init__(self, en_kvs_path, **kwargs):
+        max_df = kwargs.get('max_df',.9)
+        max_features = kwargs.get('max_features', 1000)
+        self.tfidf_vectorizer = TfidfVectorizer(
+            strip_accents='unicode',
+            lowercase=True,
+            analyzer='word',
+            max_df=max_df,
+            max_features=max_features
+        )
+        self.w2v_vectorizer = KeyedVectors.load(en_kvs_path,mmap='r')
+        self.tokenizer = self.tfidf_vectorizer.build_tokenizer()
         self.cols_to_extract = [
             'aft_id',
             'aft_page',
@@ -29,60 +31,46 @@ class CleanAndVectorize(object):
             'aft_noaction',
             'aft_inappropriate',
             'aft_helpful',
-            'aft_unhelpful'
+            'aft_unhelpful',
+            'aft_rating'
         ]
 
-    def load_vectorizer(self, enwiki_kvs_path):
-        enwiki_kvs = vectorizers.word2vec.load_gensim_kv(
-            path=enwiki_kvs_path,
-            mmap="r"
-        )
+    def get_token_vector(self, token):
+         if token in self.w2v_vectorizer:
+            return self.w2v_vectorizer[token]
+         else:
+            return np.zeros(self.w2v_vectorizer.vector_size)
 
-        vectorize_words = functools.partial(vectorizers.word2vec.vectorize_words, enwiki_kvs)
+    def get_sentence_vector(self, token_list):
+        vector_list = np.array([self.get_token_vector(x) for x in token_list])
+        sentence_vector = np.mean(vector_list,axis=0)
+        return sentence_vector
 
-        revision_text_vectors = vectorizers.word2vec(
-            mappers.lower_case(wikitext.revision.datasources.words),
-            vectorize_words,
-            name="revision.text.en_vectors")
+    def get_feature_vector(self,observation,add_rating=False):
+        feature_vector = self.get_sentence_vector(observation['tokenized_text'])
+        if add_rating:
+            feature_vector = np.append(feature_vector,observation['aft_rating'])
+        feature_vector = feature_vector.tolist()
+        return feature_vector
 
-        w2v = aggregators.mean(
-            revision_text_vectors,
-            vector=True,
-            name="revision.text.en_vectors_mean"
-        )
-
-        return w2v
-
-    def process(self, filepath, save_tokens=False, debug=False):
-        with open(filepath,encoding='latin-1') as csvfile:
-            csvreader = csv.reader(csvfile, delimiter=',', escapechar='\\')
-            for i, row in enumerate(csvreader):
-                if i == 0:
-                    header = row
-                elif row[header.index('aft_comment')]:
-                    observation = {}
-                    for j, cell in enumerate(row):
-                        if header[j] in self.cols_to_extract:
-                            observation[header[j]] = cell
-
-                    cache = {}
-
-                    cache[revision_oriented.revision.text] = observation['aft_comment']
-                    tokenized_text = solve(self.tokenizer, cache=cache, context=None)
-
-                    if save_tokens:
-                        observation['tokenized_text'] = tokenized_text
-
-                    cache[self.tokenizer] = tokenized_text
-                    observation['feature_vector'] = solve(self.vectorizer, cache=cache, context=None)
-
-                    observation['aft_net_sign_helpful'] = int(np.sign(int(observation['aft_helpful'])-int(observation['aft_unhelpful'])))
-
-                    yield observation
-
-                if debug:
-                    if i == debug:
-                        break
+    def process(self, observations, save_tokens=False, remove_zero=True, debug=False, add_rating=False):
+        if debug:
+            observations = observations.sample(debug)
+        observations = observations[self.cols_to_extract]
+        observations['aft_comment'] = observations['aft_comment'].astype(str)
+        observations['aft_net_sign_helpful'] = np.sign(
+            observations['aft_helpful'] - observations['aft_unhelpful']).astype(int)
+        if remove_zero:
+            observations = observations.loc[observations['aft_net_sign_helpful'] != 0]
+        observations['tokenized_text'] = observations['aft_comment'].apply(self.tokenizer)
+        observations = observations.loc[observations['tokenized_text'].apply(len) > 0]
+        observations['feature_vector'] = observations[['tokenized_text','aft_rating']].apply(
+            self.get_feature_vector,
+            axis=1,
+            add_rating=add_rating)
+        if not save_tokens:
+            observations.drop(labels='tokenized_text',axis=1,inplace=True)
+        return observations
 
 def main():
     parser = argparse.ArgumentParser(description='Convert .csv of AFT data to feature vectors.')
@@ -97,6 +85,8 @@ def main():
     parser.add_argument('-d', '--debug',
                         type=int)
     parser.add_argument('--save_tokens',
+                        action='store_true')
+    parser.add_argument('--add_rating',
                         action='store_true')
     args = parser.parse_args()
 
@@ -113,17 +103,19 @@ def main():
     else:
         logger.setLevel(logging.INFO)
 
-    cv = CleanAndVectorize(args.embedding_file)
+    cv = CleanAndVectorize(en_kvs_path=args.embedding_file)
+
+    dtypes = {
+        'aft_id': object,
+        'aft_helpful':int,
+        'aft_unhelpful':int
+    }
+
+    df = pd.read_csv(args.infile, escapechar='\\', encoding='latin-1', dtype=dtypes)
+    observations = cv.process(df, save_tokens=args.save_tokens, debug=args.debug, add_rating=args.add_rating)
 
     with open(args.outfile,'w') as outfile:
-        observations = [obs for obs in cv.process(args.infile,
-                                                  save_tokens=args.save_tokens,
-                                                  debug=args.debug)]
-        json.dump(observations,outfile)
+        json.dump(observations.to_dict('records'),outfile)
 
 if __name__ == "__main__":
     main()
-
-
-
-

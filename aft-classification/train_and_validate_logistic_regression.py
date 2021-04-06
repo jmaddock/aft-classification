@@ -7,22 +7,20 @@ import argparse
 import pickle
 import pandas as pd
 import numpy as np
-import psutil
 
-from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
-from autosklearn.metrics import balanced_accuracy, precision, recall, f1, roc_auc, average_precision
-import autosklearn.classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, f1_score, average_precision_score, roc_auc_score
 from scipy.sparse import load_npz
 
-METRICS = [
-    balanced_accuracy,
-    precision,
-    recall,
-    f1,
-    average_precision,
-    roc_auc
-]
+METRICS = {
+    'balanced_accuracy':balanced_accuracy_score,
+    'precision':precision_score,
+    'recall':recall_score,
+    'f1':f1_score,
+    'average_precision':average_precision_score,
+    'roc_auc':roc_auc_score
+}
 
 def generate_sample(df,n,balance=True):
     if balance and n:
@@ -35,15 +33,14 @@ def generate_sample(df,n,balance=True):
         sample = df.loc[df['aft_net_sign_helpful'] != 0]
     return sample
 
-def results_to_table(cls):
-    results = pd.DataFrame.from_dict(cls.cv_results_)
-    params = results['params'].apply(pd.Series)
-    results = pd.concat([results.drop(['params'],axis=1),params],axis=1)
-    return results
+def results_to_table(preds,truth):
+    result_dict = results_to_json(preds,truth)
+    return pd.DataFrame([result_dict])
+    #return results
 
-def results_to_json(cls):
-    results = pd.DataFrame.from_dict(cls.cv_results_).to_dict('records')
-    return results
+def results_to_json(preds,truth):
+    results_dict = {metric:METRICS[metric](truth,preds) for metric in METRICS}
+    return results_dict
 
 def main():
     parser = argparse.ArgumentParser(description='Convert .csv of AFT data to feature vectors.')
@@ -56,21 +53,9 @@ def main():
     parser.add_argument('-o', '--output_type',
                         choices=['csv','json'],
                         default='csv')
-    parser.add_argument('-k',
-                        type=int,
-                        help='number of cross validation folds')
     parser.add_argument('-n', '--sample_size',
                         type=int,
                         default=None)
-    parser.add_argument('--cpu_limit',
-                        type=int,
-                        default=psutil.cpu_count())
-    parser.add_argument('--memory_limit',
-                        type=int,
-                        default=psutil.virtual_memory()[1])
-    parser.add_argument('--time_limit',
-                        type=int,
-                        default=43200)
     parser.add_argument('-v', '--verbose',
                         action='store_true')
     parser.add_argument('-d', '--debug',
@@ -106,7 +91,6 @@ def main():
             features = pd.DataFrame(df['feature_vector'].values.tolist()).to_numpy()
 
         labels = df['aft_net_sign_helpful'].to_numpy()
-        feat_type = ['Numerical'] * np.shape(features)[1]
 
         features_train, features_test, labels_train, labels_test = train_test_split(
             features,
@@ -117,42 +101,25 @@ def main():
             random_state = 1
         )
 
-        cls = autosklearn.classification.AutoSklearnClassifier(
-            time_left_for_this_task=args.time_limit,
-            #per_run_time_limit=30,
-            include_preprocessors=['no_preprocessing'],
-            ensemble_size=0,
-            scoring_functions=METRICS,
-            #resampling_strategy = StratifiedKFold,
-            #resampling_strategy_arguments={'folds': args.k},
-            n_jobs = args.cpu_limit,
-            memory_limit = args.memory_limit
+        cls = LogisticRegression(
+            random_state = 0,
+            max_iter=1000
         )
         cls.fit(
             features_train,
             labels_train,
-            features_test,
-            labels_test,
-            feat_type=feat_type
         )
 
-    else:
-        with open(args.infile, 'rb') as filestream:
-            cls = pickle.load(filestream)
+        preds = cls.predict(features_test)
 
-    if args.save_model:
-        with open(args.save_model,'wb') as filestream:
-            pickle.dump(cls,filestream)
+        if args.output_type == 'json':
+            with open(args.outfile, 'w') as filestream:
+                results = results_to_json(preds,labels_test)
+                json.dump(results, filestream)
 
-    if args.output_type == 'json':
-        with open(args.outfile,'w') as filestream:
-            results = results_to_json(cls)
-            json.dump(results,filestream)
-
-    elif args.output_type == 'csv':
-        results = results_to_table(cls)
-        results.to_csv(args.outfile)
-
+        elif args.output_type == 'csv':
+            results = results_to_table(preds,labels_test)
+            results.to_csv(args.outfile)
 
 if __name__ == "__main__":
     main()

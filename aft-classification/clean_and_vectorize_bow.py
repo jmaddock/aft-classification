@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import csv
 import json
 import argparse
 import logging
-import functools
 import numpy as np
 import pandas as pd
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from scipy.sparse import save_npz
+from scipy.sparse import save_npz, hstack
 
 class CleanAndVectorize(object):
 
@@ -35,10 +33,11 @@ class CleanAndVectorize(object):
             'aft_noaction',
             'aft_inappropriate',
             'aft_helpful',
-            'aft_unhelpful'
+            'aft_unhelpful',
+            'aft_rating'
         ]
 
-    def process(self, observations, save_tokens=False, remove_zero=True, debug=False):
+    def process(self, observations, save_tokens=False, remove_zero=True, debug=False, add_rating=False):
         if debug:
             observations = observations.sample(debug)
         observations = observations[self.cols_to_extract]
@@ -51,6 +50,8 @@ class CleanAndVectorize(object):
             observations['tokenized_text'] = observations['aft_comment'].apply(self.tokenizer)
         #observations['feature_vector'] = self.vectorizer.fit_transform(observations['aft_comment'].values).toarray().tolist()
         feature_vectors = self.vectorizer.fit_transform(observations['aft_comment'].values)
+        if add_rating:
+            feature_vectors = hstack((feature_vectors,observations['aft_rating'].values[:,None]))
         return observations, feature_vectors
 
 def main():
@@ -72,6 +73,8 @@ def main():
     parser.add_argument('-d', '--debug',
                         type=int)
     parser.add_argument('--save_tokens',
+                        action='store_true')
+    parser.add_argument('--add_rating',
                         action='store_true')
     args = parser.parse_args()
 
@@ -97,7 +100,7 @@ def main():
     }
 
     df = pd.read_csv(args.infile, escapechar='\\', encoding='latin-1', dtype=dtypes)
-    observations, feature_vectors = cv.process(df, save_tokens=args.save_tokens, debug=args.debug)
+    observations, feature_vectors = cv.process(df, save_tokens=args.save_tokens, debug=args.debug, add_rating=args.add_rating)
 
     with open(args.meta_outfile,'w') as outfile:
         json.dump(observations.to_dict('records'),outfile)
