@@ -67,7 +67,8 @@ def main():
                         default=psutil.cpu_count())
     parser.add_argument('--memory_limit',
                         type=int,
-                        default=(psutil.virtual_memory()[1] >> 20) * .75)
+                        default=None,
+                        help='memory in mb to allocate to each process.  defaults to 75 percent of available memory / number of CPUs')
     parser.add_argument('--time_limit',
                         type=int,
                         default=43200)
@@ -91,6 +92,11 @@ def main():
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+
+    if not args.memory_limit:
+        memory_limit = ((psutil.virtual_memory()[1] >> 20) * .75) / args.cpu_limit
+    else:
+        memory_limit = args.memory_limit
 
     if args.infile.rsplit('.',1)[-1] == 'json':
         with open(args.infile,'r') as filestream:
@@ -126,7 +132,7 @@ def main():
             #resampling_strategy = StratifiedKFold,
             #resampling_strategy_arguments={'folds': args.k},
             n_jobs = args.cpu_limit,
-            memory_limit = args.memory_limit
+            memory_limit = memory_limit
         )
         cls.fit(
             features_train,
