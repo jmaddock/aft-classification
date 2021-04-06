@@ -67,7 +67,7 @@ def main():
                         default=psutil.cpu_count())
     parser.add_argument('--memory_limit',
                         type=int,
-                        default=psutil.virtual_memory()[1])
+                        default=(psutil.virtual_memory()[1] >> 20) * .75)
     parser.add_argument('--time_limit',
                         type=int,
                         default=43200)
