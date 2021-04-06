@@ -75,7 +75,7 @@ train_w2v_w_rating: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json
 		./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json \
 		./model_results/model_results_w2v_rating_2021-04-16.csv \
 		-s ./models/model_w2v_rating_2021-04-16.pickle \
-		--time_limit 43200
+		--time_limit 43200 \
 		--cpu_count 8
 
 ## download and/or create embedding files
