@@ -1,0 +1,45 @@
+GradientBoosting:
+  class: sklearn.ensemble.GradientBoostingClassifier
+  params:
+    n_estimators: [100]
+    max_depth: [1]
+    max_features: ["log2"]
+    learning_rate: [0.01]
+    min_samples_leaf: [1]
+LogisticRegression:
+  class: sklearn.linear_model.LogisticRegression
+  params:
+    penalty: ["l1"]
+    C: [0.1]
+GaussianNB:
+  class: sklearn.naive_bayes.GaussianNB
+  params: {}
+BernoulliNB:
+  class: sklearn.naive_bayes.BernoulliNB
+  params: {}
+MultinomialNB:
+  class: sklearn.naive_bayes.MultinomialNB
+  params:
+    alpha: [0.1]
+RandomForestClassifier:
+  class: sklearn.ensemble.RandomForestClassifier
+  params:
+    n_estimators: [10]
+    min_samples_leaf: [1]
+    max_features: ["log2"]
+    criterion: ["gini"]
+SVC_rbf:
+  class: sklearn.svm.SVC
+  params:
+      kernel: ["rbf"]
+      probability: [true]
+      gamma: [0.0]
+      C: [0.1]
+      cache_size: [1000]
+SVC_linear:
+  class: sklearn.svm.SVC
+  params:
+      kernel: ["linear"]
+      probability: [true]
+      C: [0.1]
+      cache_size: [1000]
