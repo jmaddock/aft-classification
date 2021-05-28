@@ -9,7 +9,7 @@ GradientBoosting:
 LogisticRegression:
   class: sklearn.linear_model.LogisticRegression
   params:
-    penalty: ["l1"]
+    penalty: ["l2"]
     C: [0.1]
 GaussianNB:
   class: sklearn.naive_bayes.GaussianNB

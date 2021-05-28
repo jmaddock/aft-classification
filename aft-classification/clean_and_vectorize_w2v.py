@@ -1,11 +1,20 @@
 import json
 import argparse
 import logging
+import re
 import numpy as np
 import pandas as pd
 
 from gensim.models import KeyedVectors
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+class BadWordCounter(object):
+
+    def __init__(self, regex_list):
+        self.pattern = re.compile('({0})'.format(')|('.join(regex_list)))
+
+    def get_bad_word_count(self, sentence):
+        return len(self.pattern.findall(sentence))
 
 class CleanAndVectorize(object):
 
