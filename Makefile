@@ -78,6 +78,13 @@ train_w2v_w_rating: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json
 		--time_limit 43200 \
 		--cpu_limit 8
 
+train_w2v_gridsearch: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json \
+	./model_config/classifiers.test_params_small.yaml
+	python ./aft-classification/train_and_validate_gridsearch.py \
+	./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json \
+	./models/best_models_w2v_rating_2021-05-29.pickle \
+	-c ./model_config/classifiers.test_params_small.yaml
+
 ## download and/or create embedding files
 ./word2vec/enwiki-20200501-learned_vectors.50_cell.10k.kv:
 	wget https://analytics.wikimedia.org/datasets/archive/public-datasets/all/ores/topic/vectors/enwiki-20200501-learned_vectors.50_cell.10k.kv -qO- > $@
