@@ -164,7 +164,7 @@ def main():
     for model in param_grid:
         gs = GridSearchCV(
             pipe,
-            param_grid,
+            [model],
             scoring=scoring,
             n_jobs=args.cpu_limit,
             pre_dispatch=args.cpu_limit*2,
