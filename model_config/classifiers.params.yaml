@@ -9,18 +9,8 @@ GradientBoosting:
 LogisticRegression:
   class: sklearn.linear_model.LogisticRegression
   params:
-    penalty: ["l1", "l2"]
+    penalty: ["l2"]
     C: [0.1, 1, 10]
-GaussianNB:
-  class: sklearn.naive_bayes.GaussianNB
-  params: {}
-BernoulliNB:
-  class: sklearn.naive_bayes.BernoulliNB
-  params: {}
-MultinomialNB:
-  class: sklearn.naive_bayes.MultinomialNB
-  params:
-    alpha: [0.1, 1, 10]
 RandomForestClassifier:
   class: sklearn.ensemble.RandomForestClassifier
   params:

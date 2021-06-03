@@ -79,11 +79,11 @@ train_w2v_w_rating: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json
 		--cpu_limit 8
 
 train_w2v_gridsearch: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json \
-	./model_config/classifiers.test_params_small.yaml
+	./model_config/classifiers.params.yaml
 	python ./aft-classification/train_and_validate_gridsearch.py \
 	./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json \
 	./models/best_models_w2v_rating_2021-05-29.pickle \
-	-c ./model_config/classifiers.test_params_small.yaml
+	-c ./model_config/classifiers.params.yaml &> ./logs/train_w2v_gridsearch.log
 
 ## download and/or create embedding files
 ./word2vec/enwiki-20200501-learned_vectors.50_cell.10k.kv:
