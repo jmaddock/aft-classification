@@ -171,7 +171,7 @@ def main():
             refit='roc_auc'
         )
         gs.fit(features_train, labels_train)
-        best_models[str(model['clf'][0].__class__.__name__)] = gs
+        best_models[model] = gs
 
     indices = {
         'train': i_train,
