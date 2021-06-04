@@ -89,8 +89,8 @@ train_w2v_gridsearch_SVC: ./datasets/vectorized/vectorized_w2v_rating_2021-03-31
 	./model_config/classifiers.params.yaml
 	python ./aft-classification/train_and_validate_gridsearch.py \
 	./datasets/vectorized/vectorized_w2v_rating_2021-03-31.json \
-	./models/best_models_w2v_rating_2021-05-29.pickle \
-	-c ./model_config/SVC.params.yaml &> ./logs/train_w2v_gridsearch.log
+	./models/best_models_w2v_rating_SVC_2021-06-03.pickle \
+	-c ./model_config/SVC.params.yaml &> ./logs/train_w2v_gridsearch_SVC.log
 
 ## download and/or create embedding files
 ./word2vec/enwiki-20200501-learned_vectors.50_cell.10k.kv:
