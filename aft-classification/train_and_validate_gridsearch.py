@@ -103,7 +103,7 @@ def class_for_name(class_path):
     return c
 
 def format_model_config(yaml):
-    param_grid = []
+    param_grid = {}
     for model in yaml:
         clf = class_for_name(yaml[model]['class'])
         params = {}
@@ -111,7 +111,7 @@ def format_model_config(yaml):
             key = 'clf__{0}'.format(param)
             params[key] = yaml[model]['params'][param]
         params['clf'] = [clf]
-        param_grid.append(params)
+        param_grid[model] = params
 
     return param_grid
 
@@ -164,7 +164,7 @@ def main():
     for model in param_grid:
         gs = GridSearchCV(
             pipe,
-            [model],
+            [param_grid[model]],
             scoring=scoring,
             n_jobs=args.cpu_limit,
             pre_dispatch=args.cpu_limit*2,
