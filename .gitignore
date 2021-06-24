@@ -5,6 +5,7 @@ word2vec/*.kv
 model_results/*.csv
 model_results/*.json
 models/*.pickle
+logs/*.log
 
 notebooks/.ipynb_checkpoints/
 venv/
